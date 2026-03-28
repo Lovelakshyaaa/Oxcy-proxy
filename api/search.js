@@ -7,9 +7,7 @@ const cors = {
 };
 
 module.exports = async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
-    return res.writeHead(204, cors).end();
-  }
+  if (req.method === 'OPTIONS') return res.writeHead(204, cors).end();
   Object.entries(cors).forEach(([k, v]) => res.setHeader(k, v));
 
   const { q, limit = 10 } = req.query;
@@ -30,8 +28,12 @@ module.exports = async function handler(req, res) {
       artists: s.artists?.map((a) => ({ name: a.name })) || [],
       album: s.album?.name || '',
       albumId: s.album?.id || null,
+      // Build album art URL from picId
+      image: s.album?.picId
+        ? `https://p3.music.126.net/yTd6_7qSYd_VKpFMSH1f1A==/${s.album.picId}.jpg?param=300y300`
+        : null,
       duration: Math.floor((s.duration || 0) / 1000),
-      fee: s.fee, // 0=free, 1=limited, 8=vip
+      fee: s.fee,
       source: 'netease',
     }));
 
