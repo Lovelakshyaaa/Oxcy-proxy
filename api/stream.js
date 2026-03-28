@@ -2,7 +2,6 @@ const match = require('@unblockneteasemusic/server');
 
 const NETEASE_BASE = 'https://netease-cloudmusic-api-rosy.vercel.app';
 
-// CORS headers — allows OxcyMusic to call this from browser
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -10,33 +9,26 @@ const cors = {
 };
 
 module.exports = async function handler(req, res) {
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.writeHead(204, cors).end();
-  }
-
+  if (req.method === 'OPTIONS') return res.writeHead(204, cors).end();
   Object.entries(cors).forEach(([k, v]) => res.setHeader(k, v));
 
   const { id } = req.query;
-
-  if (!id) {
-    return res.status(400).json({ error: 'Missing song id' });
-  }
+  if (!id) return res.status(400).json({ error: 'Missing song id' });
 
   const songId = Number(id);
-  if (isNaN(songId)) {
-    return res.status(400).json({ error: 'Invalid song id' });
-  }
+  if (isNaN(songId)) return res.status(400).json({ error: 'Invalid song id' });
 
-  // Step 1: Try official Netease URL first (works for free songs)
+  // Step 1: Official Netease URL
   try {
     const neteaseRes = await fetch(
       `${NETEASE_BASE}/song/url?id=${songId}&br=320000`,
       { signal: AbortSignal.timeout(5000) }
     );
     const data = await neteaseRes.json();
-    const url = data?.data?.[0]?.url;
-    if (url) {
+    const rawUrl = data?.data?.[0]?.url;
+    if (rawUrl) {
+      // Force HTTPS — OxcyMusic is HTTPS, mixed content blocks HTTP audio
+      const url = rawUrl.replace(/^http:\/\//, 'https://');
       return res.json({ url, source: 'netease', quality: 320 });
     }
   } catch (e) {
@@ -47,8 +39,10 @@ module.exports = async function handler(req, res) {
   try {
     const result = await match(songId, ['kuwo', 'kugou', 'bilibili']);
     if (result?.url) {
+      // Force HTTPS here too
+      const url = result.url.replace(/^http:\/\//, 'https://');
       return res.json({
-        url: result.url,
+        url,
         source: result.source,
         quality: result.br ? Math.round(result.br / 1000) : null,
       });
