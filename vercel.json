@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "name": "oxcy-proxy",
+  "functions": {
+    "api/stream.js": {
+      "maxDuration": 15
+    }
+  }
+}

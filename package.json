@@ -1,0 +1,9 @@
+{
+  "name": "oxcy-proxy",
+  "version": "1.0.0",
+  "description": "Netease music unblock proxy for OxcyMusic",
+  "main": "api/stream.js",
+  "dependencies": {
+    "@unblockneteasemusic/server": "latest"
+  }
+}
